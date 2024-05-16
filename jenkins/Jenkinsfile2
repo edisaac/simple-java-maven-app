@@ -4,7 +4,7 @@ pipeline {
         gitcommit = "${gitcommit}"
     }
     tools {
-        maven 'mavenjenkins'
+        maven 'mavenjenkins3_9'
     }
 
     stages {
@@ -22,11 +22,6 @@ pipeline {
             steps {
                 sh 'mvn -B -DskipTests clean package'
             }
-            post {
-                success {
-                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
-                }
-            }    
         }
         stage('Test') {
             steps {
@@ -41,18 +36,12 @@ pipeline {
         stage('Docker Build & Push') {
           steps {
             script {  
-              docker.withRegistry('https://registry.hub.docker.com', 'docker-hub') {
-                def appmavenjenkins = docker.build("macloujulian/mavenjenkins:${gitcommit}", ".")
+              docker.withRegistry('https://registry.hub.docker.com','docker-hub-credential') {
+                def appmavenjenkins = docker.build("edisaac/mavenjenkins:${gitcommit}", ".")
                 appmavenjenkins.push()
               }
             }  
           }  
         }
-        stage('Deploy') {
-            steps {
-                sh './jenkins/scripts/deliver.sh'
-            }
-        }
     }
-
 }
